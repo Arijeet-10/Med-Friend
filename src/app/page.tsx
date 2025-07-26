@@ -24,10 +24,14 @@ export default function LoginPage() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    console.log("Login attempt started");
     try {
       await signInWithEmailAndPassword(auth, email, password);
+      console.log("Firebase login successful");
       router.push("/dashboard");
+      console.log("Redirecting to /dashboard");
     } catch (error: any) {
+      console.error("Login failed:", error);
       toast({
         title: "Login Failed",
         description: error.message,
@@ -35,6 +39,7 @@ export default function LoginPage() {
       });
     } finally {
       setIsLoading(false);
+      console.log("Login attempt finished");
     }
   };
 

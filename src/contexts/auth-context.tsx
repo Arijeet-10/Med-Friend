@@ -23,6 +23,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
+      console.log("Auth state changed. User:", user?.email);
       setUser(user);
       setLoading(false);
     });
@@ -31,14 +32,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   useEffect(() => {
-    if (loading) return;
+    console.log(`Auth-Context useEffect triggered. Loading: ${loading}, Pathname: ${pathname}, User: ${user?.email}`);
+    if (loading) {
+      console.log("Auth context is still loading, skipping redirect logic.");
+      return;
+    }
 
     const isAuthPage = ['/', '/signup'].includes(pathname);
 
     if (!user && !isAuthPage) {
+      console.log("User not found and not on auth page, redirecting to /");
       router.push("/");
     } else if (user && isAuthPage) {
+      console.log("User is on auth page, redirecting to /dashboard");
       router.push("/dashboard");
+    } else {
+       console.log("No redirect condition met.");
     }
   }, [user, loading, router, pathname]);
 
