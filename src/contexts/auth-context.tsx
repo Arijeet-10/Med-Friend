@@ -31,8 +31,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   useEffect(() => {
-    if (!loading && !user && !['/', '/signup'].includes(pathname)) {
+    if (loading) return;
+
+    const isAuthPage = ['/', '/signup'].includes(pathname);
+
+    if (!user && !isAuthPage) {
       router.push("/");
+    } else if (user && isAuthPage) {
+      router.push("/dashboard");
     }
   }, [user, loading, router, pathname]);
 
