@@ -1,5 +1,4 @@
-
-"use client"
+"use client";
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -11,6 +10,56 @@ import { Search, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 
+// --- API Helper Functions (Moved outside the component) ---
+
+// Gets the access token securely from our own API route
+async function getAccessToken() {
+    const res = await fetch("/api/abdm/token", { method: "POST" });
+    if (!res.ok) throw new Error("Failed to fetch access token");
+    const data = await res.json();
+    return data.accessToken;
+}
+
+// Initiates authentication to send OTP
+async function initiateAuth(healthId: string, accessToken: string) {
+    const res = await fetch("https://healthidsbx.abdm.gov.in/api/v1/auth/init", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({ authMethod: "MOBILE_OTP", healthid: healthId }),
+    });
+    return res.json();
+}
+
+// Confirms OTP and gets an auth token for profile access
+async function confirmMobileOtp(txnId: string, otp: string, accessToken: string) {
+    const res = await fetch("https://healthidsbx.abdm.gov.in/api/v1/auth/confirmWithMobileOTP", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({ txnId, otp }),
+    });
+    return res.json();
+}
+
+// Fetches patient profile using the auth token from OTP confirmation
+async function getPatientProfile(authToken: string, accessToken: string) {
+    const res = await fetch("https://healthidsbx.abdm.gov.in/api/v1/account/profile", {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${accessToken}`,
+            "X-Token": `Bearer ${authToken}` // The temporary token from OTP confirmation
+        },
+    });
+    return res.json();
+}
+
+
 export default function PatientSearchPage() {
     const [searchType, setSearchType] = useState("abhaId");
     const [identifier, setIdentifier] = useState("");
@@ -21,89 +70,66 @@ export default function PatientSearchPage() {
     const { toast } = useToast();
     const router = useRouter();
 
-    // Simulates: POST /v1/search/searchByHealthId
-    const searchByHealthId = async (id: string) => {
-        console.log(`Searching for ABHA ID: ${id}`);
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        // In a real app, you'd check the API response.
-        // For this simulation, we'll assume any non-empty ID is valid.
-        if (id) {
-            return { exists: true };
-        }
-        return { exists: false };
-    }
-
-    // Simulates: POST /v1/auth/init
-    const initiateAuth = async () => {
-        console.log("Initiating authentication...");
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        const newTransactionId = `txn-${Date.now()}`;
-        console.log(`Authentication initiated, transaction ID: ${newTransactionId}`);
-        setTransactionId(newTransactionId);
-        return { success: true };
-    }
-    
-    // Simulates: POST /v1/auth/confirmWithMobileOTP
-    const confirmWithMobileOtp = async (txnId: string, userOtp: string) => {
-        console.log(`Confirming auth for transaction ${txnId} with OTP.`);
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        // In a real app, you'd verify the OTP with the backend.
-        // For this simulation, we'll accept any 6-digit OTP.
-        if (userOtp.length === 6) {
-             // Simulates getting an auth token and then fetching profile
-             console.log("OTP Verified. Fetching profile...");
-             await new Promise(resolve => setTimeout(resolve, 1000));
-             return { success: true, patientId: "1" }; // Mock patient ID
-        }
-        return { success: false };
-    }
-
-
     const handleSendOtp = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!identifier.trim()) {
-            toast({ title: "ABHA ID / Address required", variant: "destructive" });
+            toast({ title: "Identifier required", description: "Please enter an ABHA ID or Address.", variant: "destructive" });
             return;
         }
         setIsLoading(true);
 
-        const account = await searchByHealthId(identifier);
-        if (!account.exists) {
-            toast({ title: "Invalid Identifier", description: "This ABHA ID or Address does not exist.", variant: "destructive" });
-            setIsLoading(false);
-            return;
-        }
+        try {
+            const accessToken = await getAccessToken();
+            // Note: ABDM's search API is not strictly necessary for the auth flow, 
+            // but can be used to check if an ID exists before sending an OTP.
+            // We proceed directly to auth initiation.
+            
+            const authResult = await initiateAuth(identifier, accessToken);
 
-        const authResult = await initiateAuth();
-        if(authResult.success) {
-            toast({ title: "OTP Sent Successfully", description: "An OTP has been sent to the patient's registered mobile number." });
-            setIsOtpSent(true);
-        } else {
-             toast({ title: "Failed to Send OTP", description: "Could not initiate authentication. Please try again.", variant: "destructive" });
+            if (authResult.txnId) {
+                setTransactionId(authResult.txnId); // CORRECT: Store the transaction ID
+                setIsOtpSent(true);
+                toast({ title: "OTP Sent Successfully", description: "An OTP has been sent to the patient's registered mobile number." });
+            } else {
+                throw new Error(authResult.details?.[0]?.message || "Failed to send OTP");
+            }
+        } catch (error: any) {
+            toast({ title: "Error", description: error.message || "Could not initiate authentication. Please try again.", variant: "destructive" });
+        } finally {
+            setIsLoading(false);
         }
-        
-        setIsLoading(false);
-    }
+    };
 
     const handleVerifyOtp = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!otp.trim() || otp.length !== 6) {
-             toast({ title: "Invalid OTP", description: "Please enter the 6-digit OTP.", variant: "destructive" });
+            toast({ title: "Invalid OTP", description: "Please enter the 6-digit OTP.", variant: "destructive" });
             return;
         }
         setIsLoading(true);
-        
-        const result = await confirmWithMobileOtp(transactionId, otp);
 
-        if (result.success && result.patientId) {
-            // On success, redirect to patient page
-            router.push(`/dashboard/patient/${result.patientId}`);
-        } else {
-            toast({ title: "Verification Failed", description: "The OTP is incorrect or has expired.", variant: "destructive" });
+        try {
+            const accessToken = await getAccessToken();
+            const result = await confirmMobileOtp(transactionId, otp, accessToken);
+
+            if (result.token) { // CORRECT: Check for the auth token
+                const profile = await getPatientProfile(result.token, accessToken);
+                console.log("Patient Profile:", profile); // You now have the patient's data
+                
+                toast({ title: "Verification Successful!", description: `Successfully fetched profile for ${profile.name}.` });
+                
+                // On success, you can store the profile data and redirect
+                // For demonstration, we'll redirect using the healthId (ABHA ID)
+                router.push(`/dashboard/patient/${profile.healthIdNumber}`);
+            } else {
+                throw new Error(result.details?.[0]?.message || "Verification failed");
+            }
+        } catch (error: any) {
+            toast({ title: "Verification Failed", description: error.message || "The OTP is incorrect or has expired.", variant: "destructive" });
             setIsLoading(false);
         }
-    }
-
+        // No need to set isLoading to false on success because the page will redirect
+    };
 
     return (
         <div className="flex justify-center items-start pt-10">
@@ -127,8 +153,8 @@ export default function PatientSearchPage() {
                             </RadioGroup>
                             <div className="space-y-2">
                                 <Label htmlFor="identifier">{searchType === 'abhaId' ? 'ABHA ID' : 'ABHA Address'}</Label>
-                                <Input 
-                                    id="identifier" 
+                                <Input
+                                    id="identifier"
                                     placeholder={searchType === 'abhaId' ? 'e.g., 12-3456-7890-1234' : 'e.g., name@abdm'}
                                     value={identifier}
                                     onChange={(e) => setIdentifier(e.target.value)}
@@ -142,25 +168,25 @@ export default function PatientSearchPage() {
                         </form>
                     ) : (
                         <form onSubmit={handleVerifyOtp} className="space-y-6">
-                           <div className="space-y-2">
+                            <div className="space-y-2">
                                 <Label htmlFor="otp">Enter OTP</Label>
-                                <Input 
-                                    id="otp" 
-                                    placeholder="Enter 6-digit OTP" 
+                                <Input
+                                    id="otp"
+                                    placeholder="Enter 6-digit OTP"
                                     maxLength={6}
                                     value={otp}
                                     onChange={(e) => setOtp(e.target.value)}
                                     disabled={isLoading}
                                 />
                                 <p className="text-sm text-muted-foreground">
-                                    An OTP has been sent to the mobile number linked with ABHA ID: <span className="font-semibold">{identifier}</span>.
+                                    An OTP was sent to the mobile number linked with <span className="font-semibold">{identifier}</span>.
                                 </p>
                             </div>
-                             <Button type="submit" className="w-full" disabled={isLoading}>
+                            <Button type="submit" className="w-full" disabled={isLoading}>
                                 {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                                 {isLoading ? "Verifying..." : "Verify & Fetch Records"}
                             </Button>
-                             <Button variant="link" size="sm" onClick={() => {setIsOtpSent(false); setOtp("");}} className="w-full" disabled={isLoading}>
+                            <Button variant="link" size="sm" onClick={() => { setIsOtpSent(false); setOtp(""); }} className="w-full" disabled={isLoading}>
                                 Go Back
                             </Button>
                         </form>
@@ -168,5 +194,5 @@ export default function PatientSearchPage() {
                 </CardContent>
             </Card>
         </div>
-    )
+    );
 }
