@@ -13,24 +13,40 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { CreditCard, LogOut, Settings, User } from "lucide-react"
 import Link from "next/link"
+import { useAuth } from "@/hooks/use-auth"
+import { logout } from "@/lib/firebase"
+import { useRouter } from "next/navigation"
 
 export function UserNav() {
+  const { user } = useAuth();
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    await logout();
+    router.push('/');
+  }
+
+  const getInitials = (email: string | null | undefined) => {
+    if (!email) return "U";
+    return email.substring(0, 2).toUpperCase();
+  }
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-8 w-8 rounded-full">
           <Avatar className="h-9 w-9">
             <AvatarImage src="https://placehold.co/100x100.png" alt="@drsingh" data-ai-hint="person portrait" />
-            <AvatarFallback>DS</AvatarFallback>
+            <AvatarFallback>{getInitials(user?.email)}</AvatarFallback>
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56" align="end" forceMount>
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none">Dr. Singh</p>
+            <p className="text-sm font-medium leading-none">Dr. {user?.displayName || "User"}</p>
             <p className="text-xs leading-none text-muted-foreground">
-              drsingh@medivue.com
+              {user?.email}
             </p>
           </div>
         </DropdownMenuLabel>
@@ -50,12 +66,10 @@ export function UserNav() {
           </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <Link href="/" passHref>
-          <DropdownMenuItem>
-            <LogOut className="mr-2 h-4 w-4" />
-            <span>Log out</span>
-          </DropdownMenuItem>
-        </Link>
+        <DropdownMenuItem onClick={handleLogout}>
+          <LogOut className="mr-2 h-4 w-4" />
+          <span>Log out</span>
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   )

@@ -10,6 +10,7 @@ import {
   Calendar,
   Stethoscope,
   Search,
+  Loader,
 } from "lucide-react"
 import { usePathname } from "next/navigation"
 
@@ -34,6 +35,7 @@ import { Input } from "@/components/ui/input"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { UserNav } from "@/components/user-nav"
 import { cn } from "@/lib/utils"
+import { useAuth } from "@/hooks/use-auth"
 
 export default function DashboardLayout({
   children,
@@ -41,12 +43,25 @@ export default function DashboardLayout({
   children: React.ReactNode
 }) {
   const pathname = usePathname()
+  const { user, loading } = useAuth();
 
   const navItems = [
     { href: "/dashboard", icon: Home, label: "Dashboard" },
     { href: "/dashboard/appointments", icon: Calendar, label: "Appointments", badge: "6" },
     { href: "/dashboard/analytics", icon: LineChart, label: "Analytics" },
   ]
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen w-full items-center justify-center">
+        <Loader className="h-10 w-10 animate-spin" />
+      </div>
+    );
+  }
+  
+  if (!user) {
+    return null; // The AuthProvider will handle the redirect.
+  }
 
   return (
     <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">

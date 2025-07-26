@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { KeyRound, Fingerprint } from "lucide-react"
+import { KeyRound, UserPlus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -9,27 +9,38 @@ import { Label } from "@/components/ui/label"
 import Link from "next/link"
 import { Stethoscope } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { signInWithEmailAndPassword } from "firebase/auth"
+import { createUserWithEmailAndPassword } from "firebase/auth"
 import { auth } from "@/lib/firebase"
 import { useToast } from "@/hooks/use-toast"
 
-
-export default function LoginPage() {
+export default function SignupPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (password !== confirmPassword) {
+      toast({
+        title: "Passwords do not match",
+        variant: "destructive",
+      });
+      return;
+    }
     setIsLoading(true);
     try {
-      await signInWithEmailAndPassword(auth, email, password);
-      router.push("/dashboard");
+      await createUserWithEmailAndPassword(auth, email, password);
+      toast({
+        title: "Account Created",
+        description: "You have been successfully signed up. Please log in.",
+      });
+      router.push("/");
     } catch (error: any) {
       toast({
-        title: "Login Failed",
+        title: "Signup Failed",
         description: error.message,
         variant: "destructive",
       });
@@ -46,39 +57,34 @@ export default function LoginPage() {
             <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary">
               <Stethoscope className="h-8 w-8 text-primary-foreground" />
             </div>
-            <CardTitle className="text-3xl font-bold text-foreground">MediVue</CardTitle>
-            <CardDescription>Welcome back! Please log in to your account.</CardDescription>
+            <CardTitle className="text-3xl font-bold text-foreground">Create an Account</CardTitle>
+            <CardDescription>Join MediVue to manage your clinic.</CardDescription>
           </CardHeader>
           <CardContent>
-            <form className="space-y-4" onSubmit={handleLogin}>
+            <form className="space-y-4" onSubmit={handleSignup}>
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
-                <Input id="email" type="email" placeholder="doctor@medivue.com" required value={email} onChange={(e) => setEmail(e.target.value)} disabled={isLoading} />
+                <Input id="email" type="email" placeholder="doctor@medivue.com" required value={email} onChange={(e) => setEmail(e.target.value)} disabled={isLoading}/>
               </div>
               <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="password">Password</Label>
-                  <Link href="#" className="text-sm text-primary hover:underline" prefetch={false}>
-                    Forgot password?
-                  </Link>
-                </div>
+                <Label htmlFor="password">Password</Label>
                 <Input id="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} disabled={isLoading} />
               </div>
+              <div className="space-y-2">
+                <Label htmlFor="confirm-password">Confirm Password</Label>
+                <Input id="confirm-password" type="password" required value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} disabled={isLoading}/>
+              </div>
               <Button type="submit" className="w-full" disabled={isLoading}>
-                  <KeyRound className="mr-2 h-4 w-4" />
-                  {isLoading ? "Logging in..." : "Login"}
+                <UserPlus className="mr-2 h-4 w-4" />
+                {isLoading ? "Signing up..." : "Sign Up"}
               </Button>
-              <Button variant="outline" className="w-full">
-                <Fingerprint className="mr-2 h-4 w-4" />
-                Login with Biometrics
-              </Button>
-               <p className="text-center text-sm text-muted-foreground">
-                Don&apos;t have an account?{" "}
+              <p className="text-center text-sm text-muted-foreground">
+                Already have an account?{" "}
                 <Link
-                  href="/signup"
+                  href="/"
                   className="font-semibold text-primary hover:underline"
                 >
-                  Sign up
+                  Log in
                 </Link>
               </p>
             </form>
