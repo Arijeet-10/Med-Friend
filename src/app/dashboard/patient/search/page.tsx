@@ -15,45 +15,37 @@ import { useRouter } from "next/navigation";
 // Gets the access token securely from our own API route
 async function getAccessToken() {
     const res = await fetch("/api/abdm/token", { method: "POST" });
-    if (!res.ok) throw new Error("Failed to fetch access token");
     const data = await res.json();
     return data.accessToken;
-}
+  }
+  
 
 // Initiates authentication to send OTP
-async function initiateAuth(healthId: string, accessToken: string) {
-    const res = await fetch("https://healthidsbx.abdm.gov.in/api/v1/auth/init", {
+async function initiateAuth(healthId: string) {
+    const res = await fetch("/api/abha/initiate-auth", {
         method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${accessToken}`,
-        },
-        body: JSON.stringify({ authMethod: "MOBILE_OTP", healthid: healthId }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ healthId }),
     });
     return res.json();
 }
 
 // Confirms OTP and gets an auth token for profile access
-async function confirmMobileOtp(txnId: string, otp: string, accessToken: string) {
-    const res = await fetch("https://healthidsbx.abdm.gov.in/api/v1/auth/confirmWithMobileOTP", {
+async function confirmMobileOtp(txnId: string, otp: string) {
+    const res = await fetch("/api/abha/confirm-otp", {
         method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${accessToken}`,
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ txnId, otp }),
     });
     return res.json();
 }
 
 // Fetches patient profile using the auth token from OTP confirmation
-async function getPatientProfile(authToken: string, accessToken: string) {
-    const res = await fetch("https://healthidsbx.abdm.gov.in/api/v1/account/profile", {
+async function getPatientProfile(patientId: string) {
+    const res = await fetch(`/api/abha/profile?id=${patientId}`, {
         method: "GET",
         headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${accessToken}`,
-            "X-Token": `Bearer ${authToken}` // The temporary token from OTP confirmation
+            "Authorization": `Bearer mock-token`,
         },
     });
     return res.json();
@@ -79,12 +71,12 @@ export default function PatientSearchPage() {
         setIsLoading(true);
 
         try {
-            const accessToken = await getAccessToken();
+            const accessToken = "mock-token";
             // Note: ABDM's search API is not strictly necessary for the auth flow, 
             // but can be used to check if an ID exists before sending an OTP.
             // We proceed directly to auth initiation.
-            
-            const authResult = await initiateAuth(identifier, accessToken);
+
+            const authResult = await initiateAuth(identifier);
 
             if (authResult.txnId) {
                 setTransactionId(authResult.txnId); // CORRECT: Store the transaction ID
@@ -109,19 +101,16 @@ export default function PatientSearchPage() {
         setIsLoading(true);
 
         try {
-            const accessToken = await getAccessToken();
-            const result = await confirmMobileOtp(transactionId, otp, accessToken);
+            const accessToken = "mock-token";
+            const result = await confirmMobileOtp(transactionId, otp);
 
-            if (result.token) { // CORRECT: Check for the auth token
-                const profile = await getPatientProfile(result.token, accessToken);
-                console.log("Patient Profile:", profile); // You now have the patient's data
-                
-                toast({ title: "Verification Successful!", description: `Successfully fetched profile for ${profile.name}.` });
-                
-                // On success, you can store the profile data and redirect
-                // For demonstration, we'll redirect using the healthId (ABHA ID)
-                router.push(`/dashboard/patient/${profile.healthIdNumber}`);
-            } else {
+            if (result.success && result.patientId) {
+                const profile = await getPatientProfile(result.patientId);
+                console.log("Patient Profile:", profile);
+                toast({ title: "Verification Successful!", description: `Fetched profile for ${profile.name}` });
+                router.push(`/dashboard/patient/${result.patientId}`);
+            }
+            else {
                 throw new Error(result.details?.[0]?.message || "Verification failed");
             }
         } catch (error: any) {

@@ -18,27 +18,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CalendarPlus } from "lucide-react";
 
 const upcomingAppointments = [
-  {
-    patient: "Anjali Sharma",
-    abhaId: "12-3456-7890-1234",
-    date: "2024-08-05",
-    time: "10:00 AM",
-    reason: "Follow-up Checkup",
-  },
-  {
-    patient: "Vikram Kumar",
-    abhaId: "98-7654-3210-9876",
-    date: "2024-08-05",
-    time: "11:30 AM",
-    reason: "New Consultation",
-  },
-  {
-    patient: "Sunita Reddy",
-    abhaId: "56-7890-1234-5678",
-    date: "2024-08-06",
-    time: "02:00 PM",
-    reason: "Lab Report Review",
-  },
+
 ];
 
 const pastAppointments = [
