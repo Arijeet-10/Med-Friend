@@ -46,14 +46,14 @@ export default function LoginPage() {
             <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary">
               <Logo className="h-8 w-8 text-primary-foreground" />
             </div>
-            <CardTitle className="text-3xl font-bold text-foreground">MediVue</CardTitle>
+            <CardTitle className="text-3xl font-bold text-foreground">Medfriend</CardTitle>
             <CardDescription>Welcome back! Please log in to your account.</CardDescription>
           </CardHeader>
           <CardContent>
             <form className="space-y-4" onSubmit={handleLogin}>
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
-                <Input id="email" type="email" placeholder="doctor@medivue.com" required value={email} onChange={(e) => setEmail(e.target.value)} disabled={isLoading} />
+                <Input id="email" type="email" placeholder="doctor@medfriend.com" required value={email} onChange={(e) => setEmail(e.target.value)} disabled={isLoading} />
               </div>
               <div className="space-y-2">
                 <div className="flex items-center justify-between">

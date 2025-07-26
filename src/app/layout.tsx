@@ -4,8 +4,8 @@ import { Toaster } from "@/components/ui/toaster"
 import { AuthProvider } from '@/contexts/auth-context';
 
 export const metadata: Metadata = {
-  title: 'MediVue',
-  description: 'Hospital Dashboard Interface for MedFriend',
+  title: 'Medfriend',
+  description: 'Hospital Dashboard Interface for Medfriend',
 };
 
 export default function RootLayout({

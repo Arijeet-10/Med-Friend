@@ -58,13 +58,13 @@ export default function SignupPage() {
               <Logo className="h-8 w-8 text-primary-foreground" />
             </div>
             <CardTitle className="text-3xl font-bold text-foreground">Create an Account</CardTitle>
-            <CardDescription>Join MediVue to manage your clinic.</CardDescription>
+            <CardDescription>Join Medfriend to manage your clinic.</CardDescription>
           </CardHeader>
           <CardContent>
             <form className="space-y-4" onSubmit={handleSignup}>
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
-                <Input id="email" type="email" placeholder="doctor@medivue.com" required value={email} onChange={(e) => setEmail(e.target.value)} disabled={isLoading}/>
+                <Input id="email" type="email" placeholder="doctor@medfriend.com" required value={email} onChange={(e) => setEmail(e.target.value)} disabled={isLoading}/>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>
