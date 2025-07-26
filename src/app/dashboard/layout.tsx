@@ -8,7 +8,6 @@ import {
   Package2,
   Users,
   Calendar,
-  Stethoscope,
   Search,
   Loader,
 } from "lucide-react"
@@ -36,6 +35,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { UserNav } from "@/components/user-nav"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/hooks/use-auth"
+import { Logo } from "@/components/logo"
 
 export default function DashboardLayout({
   children,
@@ -69,7 +69,7 @@ export default function DashboardLayout({
         <div className="flex h-full max-h-screen flex-col gap-2">
           <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
             <Link href="/dashboard" className="flex items-center gap-2 font-semibold">
-              <Stethoscope className="h-6 w-6 text-primary" />
+              <Logo className="h-6 w-6" />
               <span className="">MediVue</span>
             </Link>
             <Button variant="outline" size="icon" className="ml-auto h-8 w-8">
@@ -125,7 +125,7 @@ export default function DashboardLayout({
                 size="icon"
                 className="shrink-0 md:hidden"
               >
-                <Stethoscope className="h-5 w-5" />
+                <Logo className="h-5 w-5" />
                 <span className="sr-only">Toggle navigation menu</span>
               </Button>
             </SheetTrigger>
@@ -135,7 +135,7 @@ export default function DashboardLayout({
                   href="#"
                   className="flex items-center gap-2 text-lg font-semibold mb-4"
                 >
-                  <Stethoscope className="h-6 w-6 text-primary" />
+                  <Logo className="h-6 w-6" />
                   <span className="sr-only">MediVue</span>
                 </Link>
                 {navItems.map((item) => (

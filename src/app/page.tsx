@@ -7,11 +7,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import Link from "next/link"
-import { Stethoscope } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { signInWithEmailAndPassword } from "firebase/auth"
 import { auth } from "@/lib/firebase"
 import { useToast } from "@/hooks/use-toast"
+import { Logo } from "@/components/logo"
 
 
 export default function LoginPage() {
@@ -44,7 +44,7 @@ export default function LoginPage() {
         <Card className="shadow-2xl">
           <CardHeader className="text-center">
             <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary">
-              <Stethoscope className="h-8 w-8 text-primary-foreground" />
+              <Logo className="h-8 w-8 text-primary-foreground" />
             </div>
             <CardTitle className="text-3xl font-bold text-foreground">MediVue</CardTitle>
             <CardDescription>Welcome back! Please log in to your account.</CardDescription>
