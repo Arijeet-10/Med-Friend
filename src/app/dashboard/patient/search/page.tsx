@@ -17,8 +17,46 @@ export default function PatientSearchPage() {
     const [otp, setOtp] = useState("");
     const [isOtpSent, setIsOtpSent] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+    const [transactionId, setTransactionId] = useState("");
     const { toast } = useToast();
     const router = useRouter();
+
+    // Simulates: POST /v1/search/searchByHealthId
+    const searchByHealthId = async (id: string) => {
+        console.log(`Searching for ABHA ID: ${id}`);
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        // In a real app, you'd check the API response.
+        // For this simulation, we'll assume any non-empty ID is valid.
+        if (id) {
+            return { exists: true };
+        }
+        return { exists: false };
+    }
+
+    // Simulates: POST /v1/auth/init
+    const initiateAuth = async () => {
+        console.log("Initiating authentication...");
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        const newTransactionId = `txn-${Date.now()}`;
+        console.log(`Authentication initiated, transaction ID: ${newTransactionId}`);
+        setTransactionId(newTransactionId);
+        return { success: true };
+    }
+    
+    // Simulates: POST /v1/auth/confirmWithMobileOTP
+    const confirmWithMobileOtp = async (txnId: string, userOtp: string) => {
+        console.log(`Confirming auth for transaction ${txnId} with OTP.`);
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        // In a real app, you'd verify the OTP with the backend.
+        // For this simulation, we'll accept any 6-digit OTP.
+        if (userOtp.length === 6) {
+             // Simulates getting an auth token and then fetching profile
+             console.log("OTP Verified. Fetching profile...");
+             await new Promise(resolve => setTimeout(resolve, 1000));
+             return { success: true, patientId: "1" }; // Mock patient ID
+        }
+        return { success: false };
+    }
 
 
     const handleSendOtp = async (e: React.FormEvent) => {
@@ -28,12 +66,22 @@ export default function PatientSearchPage() {
             return;
         }
         setIsLoading(true);
-        // Mock API call to send OTP
-        console.log(`Sending OTP for ${searchType}: ${identifier}`);
-        await new Promise(resolve => setTimeout(resolve, 1500));
+
+        const account = await searchByHealthId(identifier);
+        if (!account.exists) {
+            toast({ title: "Invalid Identifier", description: "This ABHA ID or Address does not exist.", variant: "destructive" });
+            setIsLoading(false);
+            return;
+        }
+
+        const authResult = await initiateAuth();
+        if(authResult.success) {
+            toast({ title: "OTP Sent Successfully", description: "An OTP has been sent to the patient's registered mobile number." });
+            setIsOtpSent(true);
+        } else {
+             toast({ title: "Failed to Send OTP", description: "Could not initiate authentication. Please try again.", variant: "destructive" });
+        }
         
-        toast({ title: "OTP Sent Successfully", description: "An OTP has been sent to the patient's registered mobile number." });
-        setIsOtpSent(true);
         setIsLoading(false);
     }
 
@@ -44,13 +92,16 @@ export default function PatientSearchPage() {
             return;
         }
         setIsLoading(true);
-        // Mock API call to verify OTP and fetch data
-        console.log(`Verifying OTP: ${otp}`);
-        await new Promise(resolve => setTimeout(resolve, 1500));
+        
+        const result = await confirmWithMobileOtp(transactionId, otp);
 
-        // On success, redirect to patient page
-        const mockPatientId = "1"; // This would come from the API response
-        router.push(`/dashboard/patient/${mockPatientId}`);
+        if (result.success && result.patientId) {
+            // On success, redirect to patient page
+            router.push(`/dashboard/patient/${result.patientId}`);
+        } else {
+            toast({ title: "Verification Failed", description: "The OTP is incorrect or has expired.", variant: "destructive" });
+            setIsLoading(false);
+        }
     }
 
 
@@ -109,7 +160,7 @@ export default function PatientSearchPage() {
                                 {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                                 {isLoading ? "Verifying..." : "Verify & Fetch Records"}
                             </Button>
-                             <Button variant="link" size="sm" onClick={() => setIsOtpSent(false)} className="w-full">
+                             <Button variant="link" size="sm" onClick={() => {setIsOtpSent(false); setOtp("");}} className="w-full" disabled={isLoading}>
                                 Go Back
                             </Button>
                         </form>
