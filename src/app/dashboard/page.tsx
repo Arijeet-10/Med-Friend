@@ -55,7 +55,8 @@ export default function DashboardPage() {
     // and navigate to the patient details page with a mock ID.
     // In a real app, you'd verify the patientId exists first.
     if (patientId) {
-      router.push(`/patient-details/${patientId}`);
+      // router.push(`/patient-details/${patientId}`);
+      router.push(`/dashboard/patient/${patientId}`);
     } else {
       toast({
         title: "Search Error",

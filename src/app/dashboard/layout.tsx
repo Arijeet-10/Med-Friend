@@ -21,7 +21,7 @@ export default function DashboardLayout({
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   // Extract patient ID from URL, works for routes like /dashboard/patient/[id]/...
-  const patientId = pathname.split('/')[3] || 'XXXXXX';
+  const patientId = pathname.split('/')[3] || 'None';
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
@@ -37,7 +37,7 @@ export default function DashboardLayout({
   };
   
   const sidebarNavItems = [
-    { title: "Patient Profile", href: `/dashboard` },
+    { title: "Patient Profile", href: `/dashboard/patient/${patientId}` },
     { title: "Lab Reports", href: `/dashboard/patient/${patientId}/lab-reports` },
     { title: "Prescriptions", href: `/dashboard/patient/${patientId}/prescriptions` },
     { title: "Medical History", href: `/dashboard/patient/${patientId}/history` },
