@@ -1,73 +1,92 @@
-import Image from "next/image"
-import {
-  File,
-  ListFilter,
-  MoreHorizontal,
-  PlusCircle,
-  Upload,
-} from "lucide-react"
+"use client";
 
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
-import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { AiDiagnosis } from "@/components/patient/ai-diagnosis"
+import { useEffect, useState } from "react";
+import Image from "next/image";
+import { Upload } from "lucide-react";
 
-// Mock data
-const patient = {
-  id: "1",
-  name: "Anjali Sharma",
-  avatar: "https://placehold.co/100x100.png",
-  avatarFallback: "AS",
-  email: "anjali.sharma@example.com",
-  age: 34,
-  gender: "Female",
-  abhaId: "12-3456-7890-1234",
-  lastVisit: "2024-07-29",
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { AiDiagnosis } from "@/components/patient/ai-diagnosis";
+import { AppLoader } from "@/components/app-loader"; // We'll create this loader
+
+// Define interfaces for your data structures
+interface Patient {
+  id: string;
+  name: string;
+  avatar: string;
+  avatarFallback: string;
+  email: string;
+  age: number;
+  gender: string;
+  abhaId: string;
+  lastVisit: string;
 }
 
-const prescriptions = [
-  { id: "RX728", date: "2024-07-29", medication: "Azithromycin 500mg", dosage: "1 tablet daily for 5 days", status: "Active" },
-  { id: "RX721", date: "2024-06-15", medication: "Metformin 500mg", dosage: "1 tablet twice daily", status: "Active" },
-  { id: "RX698", date: "2024-02-10", medication: "Amlodipine 5mg", dosage: "1 tablet daily", status: "Inactive" },
-]
+interface Prescription {
+  id: string;
+  date: string;
+  medication: string;
+  dosage: string;
+  status: string;
+}
 
-const labReports = [
-    { id: "LAB301", date: "2024-07-20", test: "Complete Blood Count (CBC)", status: "Completed", imageUrl: "https://placehold.co/600x400.png" },
-    { id: "LAB295", date: "2024-06-15", test: "Lipid Profile", status: "Completed", imageUrl: "https://placehold.co/600x400.png" },
-]
+interface LabReport {
+  id: string;
+  date: string;
+  test: string;
+  status: string;
+  imageUrl: string;
+}
+
+interface PatientData {
+  patient: Patient;
+  prescriptions: Prescription[];
+  labReports: LabReport[];
+}
 
 export default function PatientProfilePage({ params }: { params: { id: string } }) {
+  const [data, setData] = useState<PatientData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        setLoading(true);
+        // The patient ID from the URL could be used here to fetch specific data
+        const response = await fetch(`/api/abha/patient-details?id=${params.id}`);
+        if (!response.ok) {
+          throw new Error(`Failed to fetch data: ${response.statusText}`);
+        }
+        const result: PatientData = await response.json();
+        setData(result);
+      } catch (err: any) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchData();
+  }, [params.id]);
+
+  if (loading) {
+    return <AppLoader />;
+  }
+
+  if (error) {
+    return <div className="flex items-center justify-center h-screen text-red-500">{error}</div>;
+  }
+
+  if (!data) {
+    return <div className="flex items-center justify-center h-screen">No patient data found.</div>;
+  }
+
+  const { patient, prescriptions, labReports } = data;
+
   return (
     <div className="flex flex-col gap-4">
       <Card>
@@ -161,8 +180,8 @@ export default function PatientProfilePage({ params }: { params: { id: string } 
                     {labReports.map(report => (
                         <Card key={report.id}>
                             <CardHeader className="p-4">
-                               <CardTitle className="text-base">{report.test}</CardTitle>
-                               <CardDescription>{report.date} - {report.status}</CardDescription>
+                                <CardTitle className="text-base">{report.test}</CardTitle>
+                                <CardDescription>{report.date} - {report.status}</CardDescription>
                             </CardHeader>
                             <CardContent className="p-0">
                                 <Image
@@ -187,7 +206,7 @@ export default function PatientProfilePage({ params }: { params: { id: string } 
             <Card>
                 <CardHeader>
                     <CardTitle>Visit History</CardTitle>
-                     <CardDescription>
+                    <CardDescription>
                         A log of all past patient visits.
                     </CardDescription>
                 </CardHeader>
