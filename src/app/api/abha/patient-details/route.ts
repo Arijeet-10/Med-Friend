@@ -58,6 +58,8 @@ const patients = [
         status: "Active",
       },
       {
+
+        
         id: "RX882",
         date: "2024-06-05",
         medication: "Aspirin 75mg",
